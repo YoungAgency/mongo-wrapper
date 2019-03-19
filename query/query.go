@@ -120,6 +120,28 @@ func MergeDocuments(documents ...bson.D) bson.D {
 	return bson.D(e)
 }
 
+// Update returns a bson Document rapresenting the update to perform
+func Update(op string, e ...bson.E) bson.D {
+	var mongoOp string
+	switch op {
+	case "inc":
+		mongoOp = "$inc"
+		break
+	case "set":
+		mongoOp = "$set"
+		break
+	default:
+		panic("Invalid operator")
+	}
+
+	return bson.D{
+		{
+			Key:   mongoOp,
+			Value: e,
+		},
+	}
+}
+
 // Sort set options sort with given sort struct
 func Sort(options *options.FindOptions, ss ...SortStruct) *options.FindOptions {
 	e := make([]bson.E, len(ss))
