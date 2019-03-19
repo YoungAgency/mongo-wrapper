@@ -84,6 +84,7 @@ func FieldCompare(field string, op string, val interface{}) bson.D {
 		break
 	case ">":
 		mongoOp = "$gt"
+		break
 	case ">=":
 		mongoOp = "$gte"
 		break
@@ -139,4 +140,10 @@ func Sort(options *options.FindOptions, ss ...SortStruct) *options.FindOptions {
 type SortStruct struct {
 	Field     string // Document field name
 	Ascending bool   // Sort order
+}
+
+func DefaultFindOneOptions() *options.FindOptions {
+	options := options.Find()
+	options.SetLimit(int64(1)).SetBatchSize(int32(1))
+	return options
 }
