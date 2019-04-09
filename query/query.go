@@ -130,6 +130,9 @@ func Update(op string, e ...bson.E) bson.D {
 	case "set":
 		mongoOp = "$set"
 		break
+	case "push":
+		mongoOp = "$push"
+		break
 	default:
 		panic("Invalid operator")
 	}
