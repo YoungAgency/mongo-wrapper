@@ -108,6 +108,15 @@ func FieldCompare(field string, op string, val interface{}) bson.D {
 	}
 }
 
+// FieldRange return a bson document rapresenting query by range on given fields
+// from and to may be included in results
+func FieldRange(field string, from interface{}, to interface{}) bson.D {
+	return And(
+		FieldCompare(field, ">=", from),
+		FieldCompare(field, "<=", to),
+	)
+}
+
 // MergeDocuments returns a new document which contains all given documents fields
 // Duplicated fields are not handled
 func MergeDocuments(documents ...bson.D) bson.D {
