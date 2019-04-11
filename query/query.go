@@ -142,9 +142,6 @@ func Update(op string, e ...bson.E) bson.D {
 	case "push":
 		mongoOp = "$push"
 		break
-	case "pull":
-		mongoOp = "$pull"
-		break
 	default:
 		panic("Invalid operator")
 	}
@@ -171,6 +168,29 @@ func Sort(options *options.FindOptions, ss ...SortStruct) *options.FindOptions {
 		}
 	}
 	return options.SetSort(bson.D(e))
+}
+
+// Pull returns a bson document with the pull operation
+func Pull(ps ...PullStruct) bson.D {
+	e := make([]bson.E, len(ps))
+	for i, s := range ps {
+		e[i] = bson.E{
+			Key:   s.Key,
+			Value: s.Filter,
+		}
+	}
+	return bson.D{
+		{
+			Key:   "$pull",
+			Value: e,
+		},
+	}
+}
+
+// PullStruct is used to represent pull in MongoDB
+type PullStruct struct {
+	Key    string // Key of array
+	Filter bson.D // Filter
 }
 
 // SortStruct is used to represent sort in MongoDB
