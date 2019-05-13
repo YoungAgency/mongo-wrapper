@@ -170,6 +170,13 @@ func Sort(options *options.FindOptions, ss ...SortStruct) *options.FindOptions {
 	return options.SetSort(bson.D(e))
 }
 
+// Page set batch size and correct skip on given options
+// Use for paginated requests
+func Page(opt *options.FindOptions, batch int, page int) *options.FindOptions {
+	return opt.SetBatchSize(int32(batch)).
+		SetSkip(int64(batch * (page - 1)))
+}
+
 // Pull returns a bson document with the pull operation
 func Pull(ps ...PullStruct) bson.D {
 	e := make([]bson.E, len(ps))
