@@ -1,6 +1,14 @@
 package transaction
 
-import "context"
+import (
+	"context"
+
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readconcern"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
+	"go.mongodb.org/mongo-driver/mongo/writeconcern"
+)
 
 // Creates a mongo.SessionContext
 func CreateTransaction(ctx context.Context, client *mongo.Client, opts *options.SessionOptions, commit chan bool) (chan mongo.SessionContext, chan error) {
