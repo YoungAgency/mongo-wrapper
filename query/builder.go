@@ -43,10 +43,15 @@ func (b *Builder) Range(field string, from, to interface{}) *Builder {
 	return b
 }
 
-func (b *Builder) Filter() bson.D {
+func (b Builder) Filter() bson.D {
 	return b.doc
 }
 
 func (b *Builder) Reset() {
 	b.doc = make([]bson.E, 0)
+}
+
+// Set current builder document, it overwrite existing one
+func (b *Builder) Set(doc bson.D) {
+	b.doc = doc
 }
