@@ -28,6 +28,12 @@ func (o *FindOptions) Page(batch, page int) *FindOptions {
 	return o
 }
 
+func (o *FindOptions) Projection(fields ...string) *FindOptions {
+	projection := Projection(fields...)
+	o.options = o.options.SetProjection(projection)
+	return o
+}
+
 func (o FindOptions) Options() *options.FindOptions {
 	o.options = Sort(o.options, o.sort...)
 	return o.options
@@ -71,6 +77,17 @@ func Pull(ps ...PullStruct) bson.D {
 			Value: e,
 		},
 	}
+}
+
+func Projection(fields ...string) bson.D {
+	ret := make([]bson.E, len(fields))
+	for i, field := range fields {
+		ret[i] = bson.E{
+			Key:   field,
+			Value: 1,
+		}
+	}
+	return ret
 }
 
 // PullStruct is used to represent pull in MongoDB
