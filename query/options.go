@@ -7,14 +7,16 @@ import (
 
 // FindOptions is a wrapper around options.FindOptions
 type FindOptions struct {
-	options *options.FindOptions
-	sort    []SortStruct
+	options    *options.FindOptions
+	sort       []SortStruct
+	projection bson.D
 }
 
 func NewFindOptions() *FindOptions {
 	return &FindOptions{
-		options: options.Find(),
-		sort:    make([]SortStruct, 0),
+		options:    options.Find(),
+		sort:       make([]SortStruct, 0, 2),
+		projection: make([]bson.E, 0, 2),
 	}
 }
 
@@ -23,19 +25,37 @@ func (o *FindOptions) Sort(field string, ascending bool) *FindOptions {
 	return o
 }
 
+func (o *FindOptions) AscSort(field string) *FindOptions {
+	return o.Sort(field, true)
+}
+
+func (o *FindOptions) DescSort(field string) *FindOptions {
+	return o.Sort(field, false)
+}
+
 func (o *FindOptions) Page(batch, page int) *FindOptions {
 	o.options = Page(o.options, batch, page)
 	return o
 }
 
 func (o *FindOptions) Projection(fields ...string) *FindOptions {
-	projection := Projection(fields...)
-	o.options = o.options.SetProjection(projection)
+	for _, field := range fields {
+		o.projection = append(o.projection, bson.E{Key: field, Value: 1})
+	}
+	return o
+}
+
+// ExProjection sets an exclusive projection on options
+func (o *FindOptions) ExProjection(fields ...string) *FindOptions {
+	for _, field := range fields {
+		o.projection = append(o.projection, bson.E{Key: field, Value: 0})
+	}
 	return o
 }
 
 func (o FindOptions) Options() *options.FindOptions {
 	o.options = Sort(o.options, o.sort...)
+	o.options = o.options.SetProjection(o.projection)
 	return o.options
 }
 
