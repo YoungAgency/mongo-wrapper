@@ -51,7 +51,7 @@ func (dc DecimalCodec) DecodeValue(ctx bsoncodec.DecodeContext, vr bsonrw.ValueR
 	}
 	newDec, err := decimal.NewFromString(mongoDecimal.String())
 	if err != nil {
-		return fmt.Errorf("DecimalCodec: unable to convert mongo decimal to decimal.Decimal %v", err)
+		return fmt.Errorf("DecimalCodec: unable to convert primitive.Decimal128 to decimal.Decimal %v", err)
 	}
 	val.Set(reflect.ValueOf(newDec))
 	return nil
