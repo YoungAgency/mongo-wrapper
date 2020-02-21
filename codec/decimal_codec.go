@@ -17,7 +17,7 @@ type DecimalCodec struct {
 }
 
 // EncodeValue implements bsoncodec.ValueEncoder interface
-func (dc *DecimalCodec) EncodeValue(ctx bsoncodec.EncodeContext, vw bsonrw.ValueWriter, val reflect.Value) error {
+func (dc DecimalCodec) EncodeValue(ctx bsoncodec.EncodeContext, vw bsonrw.ValueWriter, val reflect.Value) error {
 	if val.Type() != reflect.TypeOf(decimal.Decimal{}) {
 		return bsoncodec.ValueEncoderError{
 			Name:     "DecimalEncodeValue",
@@ -34,7 +34,7 @@ func (dc *DecimalCodec) EncodeValue(ctx bsoncodec.EncodeContext, vw bsonrw.Value
 }
 
 // DecodeValue implements bsoncodec.ValueEncoder interface
-func (dc *DecimalCodec) DecodeValue(ctx bsoncodec.DecodeContext, vr bsonrw.ValueReader, val reflect.Value) error {
+func (dc DecimalCodec) DecodeValue(ctx bsoncodec.DecodeContext, vr bsonrw.ValueReader, val reflect.Value) error {
 	if !val.CanSet() || val.Type() != reflect.TypeOf(decimal.Decimal{}) {
 		return bsoncodec.ValueDecoderError{
 			Name:     "DecimalDecodeValue",
