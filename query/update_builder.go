@@ -11,9 +11,9 @@ type UpdateBuilder struct {
 
 func NewUpdateBuilder() *UpdateBuilder {
 	return &UpdateBuilder{
-		set:  make([]bson.E, 0, 2),
-		inc:  make([]bson.E, 0),
+		set:  make([]bson.E, 0),
 		push: make([]bson.E, 0),
+		inc:  make([]bson.E, 0),
 	}
 }
 
@@ -49,7 +49,7 @@ func (b *UpdateBuilder) Push(field string, values ...interface{}) *UpdateBuilder
 	return b
 }
 
-//Update returns the current update document for builder
+// Update returns the current update document for builder
 func (b *UpdateBuilder) Update() bson.D {
 	ret := bson.D{}
 	if len(b.set) > 0 {
