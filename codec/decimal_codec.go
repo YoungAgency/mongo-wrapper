@@ -26,9 +26,9 @@ func (dc DecimalCodec) EncodeValue(ctx bsoncodec.EncodeContext, vw bsonrw.ValueW
 		}
 	}
 	ourDecimal := val.Interface().(decimal.Decimal)
-	mongoDecimal, err := primitive.ParseDecimal128(ourDecimal.String())
+	mongoDecimal, err := decimalToPrimitive128(ourDecimal)
 	if err != nil {
-		return fmt.Errorf("DecimalCodec: unable to convert decimal.Decimal to primitive.Decimal128 %v", err)
+		return fmt.Errorf("DecimalCodec: unable to convert decimal.Decimal to primitive.Decimal128, %v", err)
 	}
 	return vw.WriteDecimal128(mongoDecimal)
 }
@@ -49,10 +49,29 @@ func (dc DecimalCodec) DecodeValue(ctx bsoncodec.DecodeContext, vr bsonrw.ValueR
 	if err != nil {
 		return err
 	}
-	newDec, err := decimal.NewFromString(mongoDecimal.String())
+	newDec, err := primitive128ToDecimal(mongoDecimal)
 	if err != nil {
 		return fmt.Errorf("DecimalCodec: unable to convert primitive.Decimal128 to decimal.Decimal %v", err)
 	}
 	val.Set(reflect.ValueOf(newDec))
 	return nil
+}
+
+func decimalToPrimitive128(d decimal.Decimal) (primitive.Decimal128, error) {
+	coefficient, exp := d.Coefficient(), d.Exponent()
+	mongoDecimal, ok := primitive.ParseDecimal128FromBigInt(coefficient, int(exp))
+	if !ok {
+		return primitive.Decimal128{}, fmt.Errorf("unable to parse Decimal128 from big int")
+	}
+	return mongoDecimal, nil
+}
+
+func primitive128ToDecimal(p primitive.Decimal128) (decimal.Decimal, error) {
+	bigInt, exp, err := p.BigInt()
+	if err != nil {
+		return decimal.Decimal{}, err
+	}
+	// convert exp to int32 should never be a problem since exp is in [-6176, 6111]
+	d := decimal.NewFromBigInt(bigInt, int32(exp))
+	return d, nil
 }
