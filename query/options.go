@@ -45,6 +45,16 @@ func (o *FindOptions) Projection(fields ...string) *FindOptions {
 	return o
 }
 
+// PageProjection applies a paged projection on array field elements
+// according to page and batch params
+func (o *FindOptions) PageProjection(field string, page, batch int) *FindOptions {
+	e := bsonE(field, bson.M{
+		"$slice": []int{(page - 1) * batch, batch},
+	})
+	o.projection = append(o.projection, e)
+	return o
+}
+
 // ExProjection sets an exclusive projection on options
 func (o *FindOptions) ExProjection(fields ...string) *FindOptions {
 	for _, field := range fields {
