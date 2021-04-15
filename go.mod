@@ -1,8 +1,8 @@
 module github.com/YoungAgency/mongo-wrapper
 
-go 1.13
+go 1.14
 
 require (
-	github.com/shopspring/decimal v0.0.0-20200105231215-408a2507e114
-	go.mongodb.org/mongo-driver v1.3.0
+	github.com/shopspring/decimal v1.2.0
+	go.mongodb.org/mongo-driver v1.5.1
 )
