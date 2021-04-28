@@ -24,6 +24,9 @@ func DuplicateKey(err error) bool {
 
 // Validation returns true if error represents Mongo error_code Validation
 func Validation(err error) bool {
+	if commandError, ok := err.(mongo.CommandError); ok {
+		return commandError.Code == validationCode
+	}
 	if writeEx, ok := err.(mongo.WriteException); ok {
 		if len(writeEx.WriteErrors) > 0 {
 			return writeEx.WriteErrors[0].Code == validationCode
