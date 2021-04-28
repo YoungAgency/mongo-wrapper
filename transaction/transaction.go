@@ -47,6 +47,8 @@ func CreateTransaction(ctx context.Context, client *mongo.Client, opts *options.
 	return out, out2
 }
 
+// SnapshotOptions returns session options with snapshot readconcern.
+// If attached to Session, this options will be applied to all transaction runned within that session.
 func SnapshotOptions() *options.SessionOptions {
 	return options.Session().
 		SetCausalConsistency(false).
