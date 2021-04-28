@@ -2,7 +2,7 @@ package query
 
 import "go.mongodb.org/mongo-driver/bson"
 
-// Builder struct permits to create a mongodb filter
+// Builder struct allows to build a mongodb query filter
 type Builder struct {
 	doc bson.D
 }
@@ -48,25 +48,24 @@ func (b *Builder) Range(field string, from, to interface{}) *Builder {
 	return b
 }
 
-func (b *Builder) In(field string, value interface{}) *Builder {
-	e := bson.E{
-		Key:   "$in",
-		Value: value,
-	}
-	b.doc = append(b.doc, e)
+func (b *Builder) In(field string, value ...interface{}) *Builder {
+	inFilter := FieldIn(field, value)
+	b.doc = MergeDocuments(b.doc, inFilter)
 	return b
 }
 
 func (b *Builder) Nin(field string, value interface{}) *Builder {
-	e := bson.E{
-		Key:   "$nin",
-		Value: value,
-	}
-	b.doc = append(b.doc, e)
+	inFilter := FieldNotIn(field, value)
+	b.doc = MergeDocuments(b.doc, inFilter)
 	return b
 }
 
+// Deprecated: use Build() instead
 func (b Builder) Filter() bson.D {
+	return b.doc
+}
+
+func (b Builder) Build() bson.D {
 	return b.doc
 }
 

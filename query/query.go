@@ -6,7 +6,7 @@ import (
 
 // FieldIn returns a bson to document to use as MongoDB query filter
 // Documents which field value is contained in vals will be returned
-func FieldIn(field string, vals ...string) bson.D {
+func FieldIn(field string, vals ...interface{}) bson.D {
 	a := make(bson.A, len(vals))
 	for i, v := range vals {
 		a[i] = v
@@ -52,7 +52,7 @@ func And(documents ...bson.D) bson.D {
 
 // FieldNotIn returns a bson to document to use as MongoDB query filter
 // Documents which field value is not contained in vals will be returned
-func FieldNotIn(field string, vals ...string) bson.D {
+func FieldNotIn(field string, vals ...interface{}) bson.D {
 	a := make(bson.A, len(vals))
 	for i, v := range vals {
 		a[i] = v
