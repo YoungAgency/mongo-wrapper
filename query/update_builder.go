@@ -50,7 +50,23 @@ func (b *UpdateBuilder) Push(field string, values ...interface{}) *UpdateBuilder
 }
 
 // Update returns the current update document for builder
+// Deprecated: use Build() instead
 func (b *UpdateBuilder) Update() bson.D {
+	ret := bson.D{}
+	if len(b.set) > 0 {
+		ret = append(ret, bsonE("$set", b.set))
+	}
+	if len(b.push) > 0 {
+		ret = append(ret, bsonE("$push", b.push))
+	}
+	if len(b.inc) > 0 {
+		ret = append(ret, bsonE("$inc", b.inc))
+	}
+	return ret
+}
+
+// Deprecated: use Build() instead
+func (b *UpdateBuilder) Build() bson.D {
 	ret := bson.D{}
 	if len(b.set) > 0 {
 		ret = append(ret, bsonE("$set", b.set))
