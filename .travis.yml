@@ -1,7 +1,0 @@
-language: go
-go_import_path: github.com/YoungAgency/mongo-wrapper
-go:
-  - 1.11
-  - 1.12
-before_install:                                                                 
-  - go get ./...
