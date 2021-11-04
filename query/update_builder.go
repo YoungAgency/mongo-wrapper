@@ -65,7 +65,6 @@ func (b *UpdateBuilder) Update() bson.D {
 	return ret
 }
 
-// Deprecated: use Build() instead
 func (b *UpdateBuilder) Build() bson.D {
 	ret := bson.D{}
 	if len(b.set) > 0 {

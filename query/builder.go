@@ -49,13 +49,13 @@ func (b *Builder) Range(field string, from, to interface{}) *Builder {
 }
 
 func (b *Builder) In(field string, value ...interface{}) *Builder {
-	inFilter := FieldIn(field, value)
+	inFilter := FieldIn(field, value...)
 	b.doc = MergeDocuments(b.doc, inFilter)
 	return b
 }
 
-func (b *Builder) Nin(field string, value interface{}) *Builder {
-	inFilter := FieldNotIn(field, value)
+func (b *Builder) Nin(field string, value ...interface{}) *Builder {
+	inFilter := FieldNotIn(field, value...)
 	b.doc = MergeDocuments(b.doc, inFilter)
 	return b
 }
