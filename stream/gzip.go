@@ -6,28 +6,10 @@ import (
 	"io"
 )
 
-type GzipStreamDecoder struct {
+type GzipEncoderDecoder struct {
 }
 
-func (d *GzipStreamDecoder) Decode(raw []byte) ([]byte, error) {
-	reader, err := gzip.NewReader(bytes.NewReader(raw))
-	if err != nil {
-		return nil, err
-	}
-	defer reader.Close()
-
-	b, err := io.ReadAll(reader)
-	if err != nil {
-		return nil, err
-	}
-	return b, nil
-}
-
-// GzipMongoStreamEncoder implements StreamEncoder
-type GzipMongoStreamEncoder struct {
-}
-
-func (d *GzipMongoStreamEncoder) Encode(raw []byte) ([]byte, error) {
+func (d *GzipEncoderDecoder) Encode(raw []byte) ([]byte, error) {
 	var b bytes.Buffer
 	writer := gzip.NewWriter(&b)
 	_, err := writer.Write(raw)
@@ -39,4 +21,18 @@ func (d *GzipMongoStreamEncoder) Encode(raw []byte) ([]byte, error) {
 		return nil, err
 	}
 	return b.Bytes(), nil
+}
+
+func (d *GzipEncoderDecoder) Decode(raw []byte) ([]byte, error) {
+	reader, err := gzip.NewReader(bytes.NewReader(raw))
+	if err != nil {
+		return nil, err
+	}
+	defer reader.Close()
+
+	b, err := io.ReadAll(reader)
+	if err != nil {
+		return nil, err
+	}
+	return b, nil
 }
