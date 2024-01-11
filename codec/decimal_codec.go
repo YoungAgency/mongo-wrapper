@@ -2,6 +2,7 @@ package codec
 
 import (
 	"fmt"
+	"math"
 	"reflect"
 
 	"github.com/shopspring/decimal"
@@ -33,7 +34,7 @@ func (dc DecimalCodec) EncodeValue(ctx bsoncodec.EncodeContext, vw bsonrw.ValueW
 	dec := val.Interface().(decimal.Decimal)
 	if dc.WriteInt && dec.IsInteger() {
 		i64 := dec.IntPart()
-		if dc.AllowWriteInt32 && i64 > -2147483648 && i64 < 2147483647 {
+		if dc.AllowWriteInt32 && i64 > math.MinInt32 && i64 < math.MaxInt32 {
 			return vw.WriteInt32(int32(i64))
 		} else {
 			return vw.WriteInt64(i64)
