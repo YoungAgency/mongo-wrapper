@@ -7,6 +7,17 @@ import (
 	"github.com/gomodule/redigo/redis"
 )
 
+type OffsetManagerList interface {
+	OffsetManager
+	SetOffsetAndPush(ctx context.Context, offset StreamOffset, msg []byte) error
+	SetOffsetAndPublish(ctx context.Context, offset *StreamOffset, channel, msg string) error
+}
+
+type OffsetManager interface {
+	GetOffset(ctx context.Context) (*StreamOffset, error)
+	SetOffset(ctx context.Context, offset StreamOffset) error
+}
+
 type defaultOffsetManager struct {
 }
 
@@ -18,8 +29,12 @@ func (d *defaultOffsetManager) SetOffset(ctx context.Context, offset StreamOffse
 	return nil
 }
 
-func (d *defaultOffsetManager) SetOffsetAndPush(token string, ts time.Time, msg []byte) error {
-	panic("use redis implementation")
+func (d *defaultOffsetManager) SetOffsetAndPush(ctx context.Context, offset StreamOffset, msg []byte) error {
+	return nil
+}
+
+func (d *defaultOffsetManager) SetOffsetAndPublish(ctx context.Context, offset *StreamOffset, channel, msg string) error {
+	return nil
 }
 
 type RedisOffsetManager struct {
@@ -119,7 +134,7 @@ func (d *RedisOffsetManager) SetOffsetAndPush(ctx context.Context, offset Stream
 	return nil
 }
 
-func (d *RedisOffsetManager) SetOffsetAndPublish(ctx context.Context, offset *StreamOffset, channel string, msg []byte) error {
+func (d *RedisOffsetManager) SetOffsetAndPublish(ctx context.Context, offset *StreamOffset, channel string, msg string) error {
 	conn, err := d.pool.GetContext(ctx)
 	if err != nil {
 		return err

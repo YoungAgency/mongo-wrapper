@@ -1,7 +1,6 @@
 package stream
 
 import (
-	"context"
 	"reflect"
 	"time"
 
@@ -73,15 +72,4 @@ type StreamOffset struct {
 
 type EventEncoder interface {
 	Encode(raw []byte) ([]byte, error)
-}
-
-type OffsetManagerList interface {
-	OffsetManager
-	SetOffsetAndPush(ctx context.Context, offset StreamOffset, msg []byte) error
-	SetOffsetAndPublish(ctx context.Context, offset *StreamOffset, channel, msg string) error
-}
-
-type OffsetManager interface {
-	GetOffset(ctx context.Context) (*StreamOffset, error)
-	SetOffset(ctx context.Context, offset StreamOffset) error
 }

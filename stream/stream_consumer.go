@@ -121,11 +121,11 @@ func (c *Consumer[T, K]) ConsumePublish(ctx context.Context, streamOptions *opti
 	}
 	fnb := func(ctx context.Context, doc StreamEvent[T, K]) error {
 		channel, msg := msgFn(doc.FullDocument)
-		err = tokenMan.SetOffsetAndPublish(ctx, &StreamOffset{
-			ResumeToken: doc.ID.Data,
-			Timestamp:   doc.ClusterTime,
-		}, channel, msg)
-		return err
+		so := doc.GetStreamOffset()
+		if channel == "" {
+			return tokenMan.SetOffset(ctx, *so)
+		}
+		return tokenMan.SetOffsetAndPublish(ctx, so, channel, msg)
 	}
 	return c.consumeInternal(ctx, stream, handler, fnb)
 }
@@ -153,7 +153,9 @@ func (c *Consumer[T, K]) consumeInternal(ctx context.Context, stream *mongo.Chan
 				}
 				success = true
 			}
-			if !success {
+			if success {
+				break
+			} else {
 				return lastErr
 			}
 		}
@@ -178,5 +180,21 @@ func (c *Consumer[T, K]) getStream(ctx context.Context, streamOptions *options.C
 	stream, err := c.client.Database(c.database).
 		Collection(c.collection).
 		Watch(ctx, c.streamAggregation, streamOptions)
+	if err != nil {
+		if mongoErr, ok := err.(mongo.CommandError); ok {
+			if mongoErr.Code == 286 {
+				// Resume of change stream was not possible, reset offset
+				resumeToken.ResumeToken = ""
+				resumeToken.Timestamp = time.Time{}
+				err = c.tokenManager.SetOffset(ctx, *resumeToken)
+				if err != nil {
+					return nil, err
+				}
+				streamOptions.SetStartAfter(nil)
+				streamOptions.SetStartAtOperationTime(nil)
+				return c.getStream(ctx, streamOptions)
+			}
+		}
+	}
 	return stream, err
 }
