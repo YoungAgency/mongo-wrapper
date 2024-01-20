@@ -26,6 +26,13 @@ type StreamEvent[T any, K any] struct {
 	} `bson:"ns" json:"ns"`
 }
 
+func (s StreamEvent[T, K]) GetStreamOffset() *StreamOffset {
+	return &StreamOffset{
+		ResumeToken: s.ID.Data,
+		Timestamp:   s.ClusterTime,
+	}
+}
+
 // CollectionUUID primitive.Binary `bson:"collectionUUID" json:"collectionUUID"`
 // WallTime time.Time `bson:"wallTime" json:"wallTime"`
 
@@ -71,6 +78,7 @@ type EventEncoder interface {
 type OffsetManagerList interface {
 	OffsetManager
 	SetOffsetAndPush(ctx context.Context, offset StreamOffset, msg []byte) error
+	SetOffsetAndPublish(ctx context.Context, offset *StreamOffset, channel, msg string) error
 }
 
 type OffsetManager interface {

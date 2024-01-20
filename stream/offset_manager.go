@@ -29,6 +29,12 @@ type RedisOffsetManager struct {
 	listKey string
 }
 
+type RedisOffsetManagerConfig struct {
+	Hash    string
+	Key     string
+	ListKey string
+}
+
 func NewRedisTokenManager(pool *redis.Pool, hash, key, listKey string) *RedisOffsetManager {
 	if hash == "" {
 		panic("hash can't be empty")
@@ -105,6 +111,30 @@ func (d *RedisOffsetManager) SetOffsetAndPush(ctx context.Context, offset Stream
 		return err
 	}
 	if err := conn.Send("LPUSH", d.listKey, msg); err != nil {
+		return err
+	}
+	if _, err := conn.Do("EXEC"); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (d *RedisOffsetManager) SetOffsetAndPublish(ctx context.Context, offset *StreamOffset, channel string, msg []byte) error {
+	conn, err := d.pool.GetContext(ctx)
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+	offset.Timestamp = offset.Timestamp.UTC()
+	if err := conn.Send("MULTI"); err != nil {
+		return err
+	}
+	if err := conn.Send("HSET", d.hash,
+		d.key, offset.ResumeToken,
+		d.key+"_ts", offset.Timestamp.Format(time.RFC3339)); err != nil {
+		return err
+	}
+	if err := conn.Send("PUBLISH", channel, msg); err != nil {
 		return err
 	}
 	if _, err := conn.Do("EXEC"); err != nil {
