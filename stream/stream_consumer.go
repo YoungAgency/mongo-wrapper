@@ -15,14 +15,16 @@ type Config struct {
 	Collection   string
 	Encoder      EventEncoder
 	TokenManager OffsetManager
+	StreamAgg    primitive.D
 }
 
 type Consumer[T any, K any] struct {
-	client       *mongo.Client
-	encoder      EventEncoder
-	tokenManager OffsetManager
-	database     string
-	collection   string
+	client            *mongo.Client
+	encoder           EventEncoder
+	tokenManager      OffsetManager
+	database          string
+	collection        string
+	streamAggregation primitive.D
 }
 
 type HandlerFn[T any, K any] func(ctx context.Context, event StreamEvent[T, K]) error
@@ -46,11 +48,12 @@ func NewStreamConsumer[T any, K any](client *mongo.Client, conf *Config) *Consum
 		}
 	}
 	return &Consumer[T, K]{
-		encoder:      encoder,
-		tokenManager: tokenManger,
-		client:       client,
-		database:     conf.Database,
-		collection:   conf.Collection,
+		encoder:           encoder,
+		tokenManager:      tokenManger,
+		client:            client,
+		database:          conf.Database,
+		collection:        conf.Collection,
+		streamAggregation: conf.StreamAgg,
 	}
 }
 
@@ -106,23 +109,25 @@ func (c *Consumer[T, K]) ConsumeInList(ctx context.Context, streamOptions *optio
 	return c.consumeInternal(ctx, stream, handler, fn)
 }
 
-func (c *Consumer[T, K]) ConsumePublish(ctx context.Context, streamOptions *options.ChangeStreamOptions, fns ConsumerFns[T, K]) {
+func (c *Consumer[T, K]) ConsumePublish(ctx context.Context, streamOptions *options.ChangeStreamOptions, msgFn func(doc T) (channel, msg string)) error {
 	stream, err := c.getStream(ctx, streamOptions)
 	if err != nil {
-		return
+		return err
 	}
 	defer stream.Close(ctx)
-
 	tokenMan := c.tokenManager.(OffsetManagerList)
-	fn := func(ctx context.Context, doc StreamEvent[T, K]) error {
-		channel, msg := fns.FnPublish(doc.FullDocument)
+	handler := func(ctx context.Context, doc StreamEvent[T, K]) error {
+		return nil
+	}
+	fnb := func(ctx context.Context, doc StreamEvent[T, K]) error {
+		channel, msg := msgFn(doc.FullDocument)
 		err = tokenMan.SetOffsetAndPublish(ctx, &StreamOffset{
 			ResumeToken: doc.ID.Data,
 			Timestamp:   doc.ClusterTime,
 		}, channel, msg)
 		return err
 	}
-	c.consumeInternal(ctx, stream, fns.FnHandler, fn)
+	return c.consumeInternal(ctx, stream, handler, fnb)
 }
 
 func (c *Consumer[T, K]) consumeInternal(ctx context.Context, stream *mongo.ChangeStream, handler HandlerFn[T, K], fn func(ctx context.Context, doc StreamEvent[T, K]) error) error {
@@ -172,6 +177,6 @@ func (c *Consumer[T, K]) getStream(ctx context.Context, streamOptions *options.C
 	}
 	stream, err := c.client.Database(c.database).
 		Collection(c.collection).
-		Watch(ctx, primitive.D{}, streamOptions)
+		Watch(ctx, c.streamAggregation, streamOptions)
 	return stream, err
 }
