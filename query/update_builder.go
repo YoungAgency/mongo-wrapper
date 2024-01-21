@@ -4,16 +4,18 @@ import "go.mongodb.org/mongo-driver/bson"
 
 // UpdateBuilder struct permits to create a mongodb update
 type UpdateBuilder struct {
-	set  bson.D
-	push bson.D
-	inc  bson.D
+	set        bson.D
+	push       bson.D
+	inc        bson.D
+	additional bson.D
 }
 
 func NewUpdateBuilder() *UpdateBuilder {
 	return &UpdateBuilder{
-		set:  make([]bson.E, 0),
-		push: make([]bson.E, 0),
-		inc:  make([]bson.E, 0),
+		set:        make([]bson.E, 0),
+		push:       make([]bson.E, 0),
+		inc:        make([]bson.E, 0),
+		additional: make([]bson.E, 0),
 	}
 }
 
@@ -52,7 +54,7 @@ func (b *UpdateBuilder) Push(field string, values ...interface{}) *UpdateBuilder
 // Update returns the current update document for builder
 // Deprecated: use Build() instead
 func (b *UpdateBuilder) Update() bson.D {
-	ret := bson.D{}
+	ret := b.additional
 	if len(b.set) > 0 {
 		ret = append(ret, bsonE("$set", b.set))
 	}
@@ -63,6 +65,11 @@ func (b *UpdateBuilder) Update() bson.D {
 		ret = append(ret, bsonE("$inc", b.inc))
 	}
 	return ret
+}
+
+func (b *UpdateBuilder) Append(field string, value interface{}) *UpdateBuilder {
+	b.additional = append(b.additional, bsonE(field, value))
+	return b
 }
 
 func (b *UpdateBuilder) Build() bson.D {
@@ -77,6 +84,14 @@ func (b *UpdateBuilder) Build() bson.D {
 		ret = append(ret, bsonE("$inc", b.inc))
 	}
 	return ret
+}
+
+func (b *UpdateBuilder) Clear() *UpdateBuilder {
+	b.set = make([]bson.E, 0)
+	b.push = make([]bson.E, 0)
+	b.inc = make([]bson.E, 0)
+	b.additional = make([]bson.E, 0)
+	return b
 }
 
 func bsonE(key string, value interface{}) bson.E {
