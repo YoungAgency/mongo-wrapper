@@ -29,11 +29,6 @@ type Consumer[T any, K any] struct {
 
 type HandlerFn[T any, K any] func(ctx context.Context, event StreamEvent[T, K]) error
 
-type ConsumerFns[T any, K any] interface {
-	FnHandler(ctx context.Context, event StreamEvent[T, K]) error
-	FnPublish(doc T) (channel, msg string)
-}
-
 func NewStreamConsumer[T any, K any](client *mongo.Client, conf *Config) *Consumer[T, K] {
 	var encoder EventEncoder
 	var tokenManger OffsetManager
@@ -109,7 +104,7 @@ func (c *Consumer[T, K]) ConsumeInList(ctx context.Context, streamOptions *optio
 	return c.consumeInternal(ctx, stream, handler, fn)
 }
 
-func (c *Consumer[T, K]) ConsumePublish(ctx context.Context, streamOptions *options.ChangeStreamOptions, msgFn func(doc T) (channel, msg string)) error {
+func (c *Consumer[T, K]) ConsumePublish(ctx context.Context, streamOptions *options.ChangeStreamOptions, msgFn func(event StreamEvent[T, K]) (channel, msg string)) error {
 	stream, err := c.getStream(ctx, streamOptions)
 	if err != nil {
 		return err
@@ -120,7 +115,7 @@ func (c *Consumer[T, K]) ConsumePublish(ctx context.Context, streamOptions *opti
 		return nil
 	}
 	fnb := func(ctx context.Context, doc StreamEvent[T, K]) error {
-		channel, msg := msgFn(doc.FullDocument)
+		channel, msg := msgFn(doc)
 		so := doc.GetStreamOffset()
 		if channel == "" {
 			return tokenMan.SetOffset(ctx, *so)
