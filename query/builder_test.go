@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 func TestBuilder_In(t *testing.T) {

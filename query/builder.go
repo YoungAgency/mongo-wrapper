@@ -1,6 +1,6 @@
 package query
 
-import "go.mongodb.org/mongo-driver/bson"
+import "go.mongodb.org/mongo-driver/v2/bson"
 
 // Builder struct allows to build a mongodb query filter
 type Builder struct {

@@ -6,10 +6,7 @@ import (
 	"reflect"
 
 	"github.com/shopspring/decimal"
-	"go.mongodb.org/mongo-driver/bson/bsoncodec"
-	"go.mongodb.org/mongo-driver/bson/bsonrw"
-	"go.mongodb.org/mongo-driver/bson/bsontype"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 // DecimalCodec is used to encode decimal.Decimal types in primitive.Decimal128 and
@@ -22,9 +19,9 @@ type DecimalCodec struct {
 }
 
 // EncodeValue implements bsoncodec.ValueEncoder interface
-func (dc DecimalCodec) EncodeValue(ctx bsoncodec.EncodeContext, vw bsonrw.ValueWriter, val reflect.Value) error {
+func (dc DecimalCodec) EncodeValue(ctx bson.EncodeContext, vw bson.ValueWriter, val reflect.Value) error {
 	if val.Type() != reflect.TypeOf(decimal.Decimal{}) {
-		return bsoncodec.ValueEncoderError{
+		return bson.ValueEncoderError{
 			Name:     "DecimalEncodeValue",
 			Types:    []reflect.Type{reflect.TypeOf(decimal.Decimal{})},
 			Received: val,
@@ -49,16 +46,16 @@ func (dc DecimalCodec) EncodeValue(ctx bsoncodec.EncodeContext, vw bsonrw.ValueW
 }
 
 // DecodeValue implements bsoncodec.ValueEncoder interface
-func (dc DecimalCodec) DecodeValue(ctx bsoncodec.DecodeContext, vr bsonrw.ValueReader, val reflect.Value) error {
+func (dc DecimalCodec) DecodeValue(ctx bson.DecodeContext, vr bson.ValueReader, val reflect.Value) error {
 	if !val.CanSet() || val.Type() != reflect.TypeOf(decimal.Decimal{}) {
-		return bsoncodec.ValueDecoderError{
+		return bson.ValueDecoderError{
 			Name:     "DecimalDecodeValue",
 			Types:    []reflect.Type{reflect.TypeOf(decimal.Decimal{})},
 			Received: val,
 		}
 	}
 	switch vr.Type() {
-	case bsontype.Decimal128:
+	case bson.TypeDecimal128:
 		mongoDecimal, err := vr.ReadDecimal128()
 		if err != nil {
 			return err
@@ -68,27 +65,27 @@ func (dc DecimalCodec) DecodeValue(ctx bsoncodec.DecodeContext, vr bsonrw.ValueR
 			return fmt.Errorf("DecimalCodec: unable to convert primitive.Decimal128 to decimal.Decimal %v", err)
 		}
 		val.Set(reflect.ValueOf(newDec))
-	case bsontype.Int32:
+	case bson.TypeInt32:
 		i32, err := vr.ReadInt32()
 		if err != nil {
 			return err
 		}
 		val.Set(reflect.ValueOf(decimal.NewFromInt32(i32)))
-	case bsontype.Int64:
+	case bson.TypeInt64:
 		i64, err := vr.ReadInt64()
 		if err != nil {
 			return err
 		}
 		val.Set(reflect.ValueOf(decimal.NewFromInt(i64)))
-	case bsontype.Double:
+	case bson.TypeDouble:
 		f64, err := vr.ReadDouble()
 		if err != nil {
 			return err
 		}
 		val.Set(reflect.ValueOf(decimal.NewFromFloat(f64)))
-	case bsontype.Null:
+	case bson.TypeNull:
 		val.Set(reflect.ValueOf(decimal.Zero))
-	case bsontype.String:
+	case bson.TypeString:
 		str, err := vr.ReadString()
 		if err != nil {
 			return err
@@ -104,16 +101,16 @@ func (dc DecimalCodec) DecodeValue(ctx bsoncodec.DecodeContext, vr bsonrw.ValueR
 	return nil
 }
 
-func decimalToPrimitive128(d decimal.Decimal) (primitive.Decimal128, error) {
+func decimalToPrimitive128(d decimal.Decimal) (bson.Decimal128, error) {
 	coefficient, exp := d.Coefficient(), d.Exponent()
-	mongoDecimal, ok := primitive.ParseDecimal128FromBigInt(coefficient, int(exp))
+	mongoDecimal, ok := bson.ParseDecimal128FromBigInt(coefficient, int(exp))
 	if !ok {
-		return primitive.Decimal128{}, fmt.Errorf("unable to parse Decimal128 from big int")
+		return bson.Decimal128{}, fmt.Errorf("unable to parse Decimal128 from big int")
 	}
 	return mongoDecimal, nil
 }
 
-func primitive128ToDecimal(p primitive.Decimal128) (decimal.Decimal, error) {
+func primitive128ToDecimal(p bson.Decimal128) (decimal.Decimal, error) {
 	bigInt, exp, err := p.BigInt()
 	if err != nil {
 		return decimal.Decimal{}, err
