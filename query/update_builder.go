@@ -1,6 +1,6 @@
 package query
 
-import "go.mongodb.org/mongo-driver/bson"
+import "go.mongodb.org/mongo-driver/v2/bson"
 
 // UpdateBuilder struct permits to create a mongodb update
 type UpdateBuilder struct {
