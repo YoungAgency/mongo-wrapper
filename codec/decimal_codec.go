@@ -6,7 +6,6 @@ import (
 	"reflect"
 
 	"github.com/shopspring/decimal"
-	"go.mongodb.org/mongo-driver/bson/bsoncodec"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
@@ -20,9 +19,9 @@ type DecimalCodec struct {
 }
 
 // EncodeValue implements bsoncodec.ValueEncoder interface
-func (dc DecimalCodec) EncodeValue(ctx bsoncodec.EncodeContext, vw bson.ValueWriter, val reflect.Value) error {
+func (dc DecimalCodec) EncodeValue(ctx bson.EncodeContext, vw bson.ValueWriter, val reflect.Value) error {
 	if val.Type() != reflect.TypeOf(decimal.Decimal{}) {
-		return bsoncodec.ValueEncoderError{
+		return bson.ValueEncoderError{
 			Name:     "DecimalEncodeValue",
 			Types:    []reflect.Type{reflect.TypeOf(decimal.Decimal{})},
 			Received: val,
@@ -47,9 +46,9 @@ func (dc DecimalCodec) EncodeValue(ctx bsoncodec.EncodeContext, vw bson.ValueWri
 }
 
 // DecodeValue implements bsoncodec.ValueEncoder interface
-func (dc DecimalCodec) DecodeValue(ctx bsoncodec.DecodeContext, vr bson.ValueReader, val reflect.Value) error {
+func (dc DecimalCodec) DecodeValue(ctx bson.DecodeContext, vr bson.ValueReader, val reflect.Value) error {
 	if !val.CanSet() || val.Type() != reflect.TypeOf(decimal.Decimal{}) {
-		return bsoncodec.ValueDecoderError{
+		return bson.ValueDecoderError{
 			Name:     "DecimalDecodeValue",
 			Types:    []reflect.Type{reflect.TypeOf(decimal.Decimal{})},
 			Received: val,
