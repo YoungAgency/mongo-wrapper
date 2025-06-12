@@ -53,11 +53,6 @@ func (pb *PipelineBuilder) AppendStage(stage bson.D) *PipelineBuilder {
 	return pb
 }
 
-// Deprecated: use Build() instead
-func (pb *PipelineBuilder) Pipeline() mongo.Pipeline {
-	return pb.pipeline
-}
-
 func (pb *PipelineBuilder) Build() mongo.Pipeline {
 	return pb.pipeline
 }
