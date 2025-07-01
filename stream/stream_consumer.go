@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 type Config struct {
@@ -15,7 +15,7 @@ type Config struct {
 	Collection   string
 	Encoder      EventEncoder
 	TokenManager OffsetManager
-	StreamAgg    primitive.D
+	StreamAgg    bson.D
 }
 
 type Consumer[T any, K any] struct {
@@ -24,7 +24,7 @@ type Consumer[T any, K any] struct {
 	tokenManager      OffsetManager
 	database          string
 	collection        string
-	streamAggregation primitive.D
+	streamAggregation bson.D
 }
 
 type HandlerFn[T any, K any] func(ctx context.Context, event StreamEvent[T, K]) error
@@ -52,7 +52,7 @@ func NewStreamConsumer[T any, K any](client *mongo.Client, conf *Config) *Consum
 	}
 }
 
-func (c *Consumer[T, K]) ConsumeHandler(ctx context.Context, streamOptions *options.ChangeStreamOptions, handler HandlerFn[T, K]) error {
+func (c *Consumer[T, K]) ConsumeHandler(ctx context.Context, streamOptions *options.ChangeStreamOptionsBuilder, handler HandlerFn[T, K]) error {
 	stream, err := c.getStream(ctx, streamOptions)
 	if err != nil {
 		return err
@@ -83,7 +83,7 @@ func (c *Consumer[T, K]) ConsumeHandler(ctx context.Context, streamOptions *opti
 	return stream.Err()
 }
 
-func (c *Consumer[T, K]) ConsumeInList(ctx context.Context, streamOptions *options.ChangeStreamOptions, handler HandlerFn[T, K]) error {
+func (c *Consumer[T, K]) ConsumeInList(ctx context.Context, streamOptions *options.ChangeStreamOptionsBuilder, handler HandlerFn[T, K]) error {
 	stream, err := c.getStream(ctx, streamOptions)
 	if err != nil {
 		return err
@@ -104,7 +104,7 @@ func (c *Consumer[T, K]) ConsumeInList(ctx context.Context, streamOptions *optio
 	return c.consumeInternal(ctx, stream, handler, fn)
 }
 
-func (c *Consumer[T, K]) ConsumePublish(ctx context.Context, streamOptions *options.ChangeStreamOptions, msgFn func(event StreamEvent[T, K]) (channel, msg string)) error {
+func (c *Consumer[T, K]) ConsumePublish(ctx context.Context, streamOptions *options.ChangeStreamOptionsBuilder, msgFn func(event StreamEvent[T, K]) (channel, msg string)) error {
 	stream, err := c.getStream(ctx, streamOptions)
 	if err != nil {
 		return err
@@ -158,18 +158,18 @@ func (c *Consumer[T, K]) consumeInternal(ctx context.Context, stream *mongo.Chan
 	return stream.Err()
 }
 
-func (c *Consumer[T, K]) getStream(ctx context.Context, streamOptions *options.ChangeStreamOptions) (*mongo.ChangeStream, error) {
+func (c *Consumer[T, K]) getStream(ctx context.Context, streamOptions *options.ChangeStreamOptionsBuilder) (*mongo.ChangeStream, error) {
 	resumeToken, err := c.tokenManager.GetOffset(ctx)
 	if err != nil {
 		return nil, err
 	}
 	if resumeToken != nil && resumeToken.ResumeToken != "" {
-		streamOptions.SetStartAfter(primitive.M{
+		streamOptions.SetStartAfter(bson.M{
 			"_data": resumeToken.ResumeToken,
 		})
 	} else if resumeToken != nil && !resumeToken.Timestamp.IsZero() {
 		// if timestamp is out of range for oplog it will be ignored
-		dt := &primitive.Timestamp{T: uint32(resumeToken.Timestamp.UTC().Unix()), I: 0}
+		dt := &bson.Timestamp{T: uint32(resumeToken.Timestamp.UTC().Unix()), I: 0}
 		streamOptions.SetStartAtOperationTime(dt)
 	}
 	stream, err := c.client.Database(c.database).
