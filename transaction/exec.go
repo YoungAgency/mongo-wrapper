@@ -14,7 +14,7 @@ type ExecFn func(ctx context.Context) (any, error)
 
 // mongoExecSnapshot opens a session with Snapshot options using given client.
 // Session is closed when this method returns
-func mongoExecSnapshot(ctx context.Context, client *mongo.Client, fn ExecFn) (any, error) {
+func ExecSnapshot(ctx context.Context, client *mongo.Client, fn ExecFn) (any, error) {
 	opt := mongoSnapshotOptions()
 	session, err := client.StartSession(opt)
 	if err != nil {
