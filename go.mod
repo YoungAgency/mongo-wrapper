@@ -5,7 +5,6 @@ go 1.23.0
 toolchain go1.23.2
 
 require (
-	github.com/gomodule/redigo v1.9.2
 	github.com/shopspring/decimal v1.4.0
 	go.mongodb.org/mongo-driver/v2 v2.2.2
 )

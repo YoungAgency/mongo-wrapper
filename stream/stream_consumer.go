@@ -2,7 +2,6 @@ package stream
 
 import (
 	"context"
-	"encoding/json"
 	"time"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -78,81 +77,6 @@ func (c *Consumer[T, K]) ConsumeHandler(ctx context.Context, streamOptions *opti
 				continue
 			}
 			break
-		}
-	}
-	return stream.Err()
-}
-
-func (c *Consumer[T, K]) ConsumeInList(ctx context.Context, streamOptions *options.ChangeStreamOptionsBuilder, handler HandlerFn[T, K]) error {
-	stream, err := c.getStream(ctx, streamOptions)
-	if err != nil {
-		return err
-	}
-	tokenMan := c.tokenManager.(OffsetManagerList)
-	fn := func(ctx context.Context, doc StreamEvent[T, K]) error {
-		jsonMsg, err := json.Marshal(doc)
-		if err != nil {
-			return nil
-		}
-		err = tokenMan.SetOffsetAndPush(ctx, StreamOffset{
-			ResumeToken: doc.ID.Data,
-			Timestamp:   doc.ClusterTime,
-		}, jsonMsg)
-
-		return err
-	}
-	return c.consumeInternal(ctx, stream, handler, fn)
-}
-
-func (c *Consumer[T, K]) ConsumePublish(ctx context.Context, streamOptions *options.ChangeStreamOptionsBuilder, msgFn func(event StreamEvent[T, K]) (channel, msg string)) error {
-	stream, err := c.getStream(ctx, streamOptions)
-	if err != nil {
-		return err
-	}
-	defer stream.Close(ctx)
-	tokenMan := c.tokenManager.(OffsetManagerList)
-	handler := func(ctx context.Context, doc StreamEvent[T, K]) error {
-		return nil
-	}
-	fnb := func(ctx context.Context, doc StreamEvent[T, K]) error {
-		channel, msg := msgFn(doc)
-		so := doc.GetStreamOffset()
-		if channel == "" {
-			return tokenMan.SetOffset(ctx, *so)
-		}
-		return tokenMan.SetOffsetAndPublish(ctx, so, channel, msg)
-	}
-	return c.consumeInternal(ctx, stream, handler, fnb)
-}
-
-func (c *Consumer[T, K]) consumeInternal(ctx context.Context, stream *mongo.ChangeStream, handler HandlerFn[T, K], fn func(ctx context.Context, doc StreamEvent[T, K]) error) error {
-	doc := StreamEvent[T, K]{}
-	lastErr := error(nil)
-
-	for stream.Next(ctx) {
-		if err := stream.Decode(&doc); err != nil {
-			return err
-		}
-		for {
-			if err := handler(ctx, doc); err != nil {
-				<-time.After(1 * time.Second)
-				continue
-			}
-			success := false
-			retries := 3
-			for retries > 0 && !success {
-				if err := fn(ctx, doc); err != nil {
-					<-time.After(1 * time.Second)
-					retries--
-					lastErr = err
-				}
-				success = true
-			}
-			if success {
-				break
-			} else {
-				return lastErr
-			}
 		}
 	}
 	return stream.Err()
