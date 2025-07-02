@@ -101,7 +101,7 @@ func (c *Consumer[T, K]) getStream(ctx context.Context, streamOptions *options.C
 		Watch(ctx, c.streamAggregation, streamOptions)
 	if err != nil {
 		if mongoErr, ok := err.(mongo.CommandError); ok {
-			if mongoErr.Code == 286 {
+			if mongoErr.Code == 286 || mongoErr.Code == 280 {
 				// Resume of change stream was not possible, reset offset
 				resumeToken.ResumeToken = ""
 				resumeToken.Timestamp = time.Time{}
