@@ -40,7 +40,7 @@ func TestBuilder_In(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			b := NewBuilder()
+			b := NewFilterBuilder()
 			if got := b.In(tt.args.field, tt.args.value...).Build(); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Builder.In() = %v, want %v", got, tt.want)
 			}
@@ -81,7 +81,7 @@ func TestBuilder_Nin(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			b := NewBuilder()
+			b := NewFilterBuilder()
 			if got := b.Nin(tt.args.field, tt.args.value...).Build(); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Builder.Nin() = %v, want %v", got, tt.want)
 			}
