@@ -14,7 +14,7 @@ type Config struct {
 	Collection   string
 	Encoder      EventEncoder
 	TokenManager OffsetManager
-	StreamAgg    bson.D
+	StreamAgg    []bson.D
 }
 
 type Consumer[T any, K any] struct {
@@ -23,7 +23,7 @@ type Consumer[T any, K any] struct {
 	tokenManager      OffsetManager
 	database          string
 	collection        string
-	streamAggregation bson.D
+	streamAggregation []bson.D
 }
 
 type HandlerFn[T any, K any] func(ctx context.Context, event StreamEvent[T, K]) error
