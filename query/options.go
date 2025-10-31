@@ -1,13 +1,13 @@
 package query
 
 import (
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 // FindOptions is a wrapper around options.FindOptions
 type FindOptions struct {
-	options    *options.FindOptions
+	options    *options.FindOptionsBuilder
 	sort       []SortStruct
 	projection bson.D
 }
@@ -63,14 +63,14 @@ func (o *FindOptions) ExProjection(fields ...string) *FindOptions {
 	return o
 }
 
-func (o FindOptions) Options() *options.FindOptions {
+func (o FindOptions) Options() *options.FindOptionsBuilder {
 	o.options = Sort(o.options, o.sort...)
 	o.options = o.options.SetProjection(o.projection)
 	return o.options
 }
 
 // Sort set options sort with given sort struct
-func Sort(options *options.FindOptions, ss ...SortStruct) *options.FindOptions {
+func Sort(options *options.FindOptionsBuilder, ss ...SortStruct) *options.FindOptionsBuilder {
 	e := make([]bson.E, len(ss))
 	for i, s := range ss {
 		order := -1 // descending
@@ -87,7 +87,7 @@ func Sort(options *options.FindOptions, ss ...SortStruct) *options.FindOptions {
 
 // Page set batch size and correct skip on given options
 // Use for paginated requests
-func Page(opt *options.FindOptions, batch int, page int) *options.FindOptions {
+func Page(opt *options.FindOptionsBuilder, batch int, page int) *options.FindOptionsBuilder {
 	return opt.SetBatchSize(int32(batch)).
 		SetSkip(int64(batch * (page - 1))).SetLimit(int64(batch))
 }
@@ -132,7 +132,7 @@ type SortStruct struct {
 	Ascending bool   // Sort order
 }
 
-func DefaultFindOneOptions() *options.FindOptions {
+func DefaultFindOneOptions() *options.FindOptionsBuilder {
 	options := options.Find()
 	options.SetLimit(int64(1)).SetBatchSize(int32(1))
 	return options

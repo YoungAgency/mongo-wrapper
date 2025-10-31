@@ -1,7 +1,7 @@
 package query
 
 import (
-	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 // FieldIn returns a bson to document to use as MongoDB query filter

@@ -3,7 +3,7 @@ package errors
 import (
 	"testing"
 
-	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
 func TestDuplicateKey(t *testing.T) {
