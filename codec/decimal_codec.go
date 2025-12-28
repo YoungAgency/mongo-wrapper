@@ -8,8 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
-type DecimalCodec struct {
-}
+type DecimalCodec struct{}
 
 // EncodeValue implements bsoncodec.ValueEncoder interface
 func (dc DecimalCodec) EncodeValue(ctx bson.EncodeContext, vw bson.ValueWriter, val reflect.Value) error {
@@ -37,17 +36,35 @@ func (dc DecimalCodec) DecodeValue(ctx bson.DecodeContext, vr bson.ValueReader, 
 			Received: val,
 		}
 	}
-	if vr.Type() != bson.TypeDecimal128 {
+
+	var newDec decimal.Decimal
+
+	switch vr.Type() {
+	case bson.TypeDecimal128:
+		mongoDecimal, err := vr.ReadDecimal128()
+		if err != nil {
+			return err
+		}
+		newDec, err = primitive128ToDecimal(mongoDecimal)
+		if err != nil {
+			return fmt.Errorf("DecimalCodec: unable to convert primitive.Decimal128 to decimal.Decimal %v", err)
+		}
+	case bson.TypeInt32:
+		i32, err := vr.ReadInt32()
+		if err != nil {
+			return err
+		}
+		newDec = decimal.NewFromInt32(i32)
+	case bson.TypeDouble:
+		f64, err := vr.ReadDouble()
+		if err != nil {
+			return err
+		}
+		newDec = decimal.NewFromFloat(f64)
+	default:
 		return fmt.Errorf("cannot decode %v into a decimal.Decimal type", vr.Type())
 	}
-	mongoDecimal, err := vr.ReadDecimal128()
-	if err != nil {
-		return err
-	}
-	newDec, err := primitive128ToDecimal(mongoDecimal)
-	if err != nil {
-		return fmt.Errorf("DecimalCodec: unable to convert primitive.Decimal128 to decimal.Decimal %v", err)
-	}
+
 	val.Set(reflect.ValueOf(newDec))
 	return nil
 }
